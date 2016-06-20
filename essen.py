@@ -36,13 +36,7 @@ def row_to_data_point(row):
     duration = str(Fraction(row[ROW_DURATION]).limit_denominator(32))
     return (pitch, duration)
 
-# Parse the CSV file formatted as line_number, song_id, pitch, duration(, interval, ...) to a list of songs consisting
-# of notes represented as indices, together with the dictionaires idx_to_notes and notes_to_idx to convert between
-# indices and (pitch, duration) tuples.
-def parse_songs(csv_file):
-    idx = 0
-    songs = []
-    notes_to_idx = dict()
+def parse_songs(csv_file, notes_to_idx):
     with open(csv_file, 'rb') as csv_file:
         reader = csv.reader(csv_file)
         song_id = None
@@ -55,16 +49,31 @@ def parse_songs(csv_file):
             if song_id == row[ROW_SONG_ID] or song_id is None:
                 song_id = row[ROW_SONG_ID] if song_id is None else song_id
                 data_point = row_to_data_point(row)
-                if data_point not in notes_to_idx:
-                    notes_to_idx[data_point] = idx
-                    idx += 1
                 song.append(notes_to_idx[data_point])
             else:
-                songs.append(song)
+                cur_song = song
                 song_id = row[ROW_SONG_ID]
                 song = []
+                yield cur_song
+
+# Create a vocabulary from a given dataset.
+def create_vocab(csv_file):
+    idx = 0
+    notes_to_idx = dict()
+    with open(csv_file, 'rb') as csv_file:
+        reader = csv.reader(csv_file)
+        song_id = None
+        skip_first = True
+        for row in reader:
+            if skip_first:
+                skip_first = False
+                continue
+            data_point = row_to_data_point(row)
+            if data_point not in notes_to_idx:
+                notes_to_idx[data_point] = idx
+                idx += 1
     idx_to_notes = {v: k for k, v in notes_to_idx.iteritems()}
-    return songs, idx_to_notes, notes_to_idx
+    return idx_to_notes, notes_to_idx
 
 # Saves the notes vocabulary (idx_to_notes) to a csv file with the given filename.
 def save_notes_vocab(idx_to_notes, filename):
@@ -82,17 +91,3 @@ def load_notes_vocab(filename):
             idx_to_notes[int(row[0])] = eval(row[1])
         notes_to_idx = {v: k for k, v in idx_to_notes.iteritems()}
         return idx_to_notes, notes_to_idx
-
-# Save the songs multidimensional array to a csv file.
-def save_songs(songs, filename):
-    with open(filename, 'wb') as f:
-        writer = csv.writer(f)
-        writer.writerows(songs)
-
-# Load the (preprocessed) multidimensional songs array to a csv file.
-def load_songs(filename):
-    with open(filename, 'rb') as f:
-        reader = csv.reader(f)
-        for row in reader:
-            song = [int(x) for x in row]
-            yield song
