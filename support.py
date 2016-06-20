@@ -2,6 +2,7 @@ import numpy as np
 import nltk
 import itertools
 import warnings
+import essen
 
 IGNORED_TOKEN = "IGNORED_TOKEN"
 
@@ -97,3 +98,18 @@ def generate_sentence(model, word_to_index, index_to_word, start_symbols, senten
         new_sentence.append(sampled_word)
     sentence_str = [index_to_word[x] for x in new_sentence[1:-1]]
     return sentence_str
+
+
+def load_vocab(file):
+    idx_to_notes, notes_to_idx = essen.load_notes_vocab(file)
+    return idx_to_notes, notes_to_idx
+
+def load_songs(file, vocab):
+    for song in essen.parse_songs(file, vocab):
+        yield song
+
+def file_len(file):
+    with open(file) as f:
+        for i, l in enumerate(f):
+            pass
+    return i + 1
