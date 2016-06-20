@@ -82,3 +82,17 @@ def load_notes_vocab(filename):
             idx_to_notes[int(row[0])] = eval(row[1])
         notes_to_idx = {v: k for k, v in idx_to_notes.iteritems()}
         return idx_to_notes, notes_to_idx
+
+# Save the songs multidimensional array to a csv file.
+def save_songs(songs, filename):
+    with open(filename, 'wb') as f:
+        writer = csv.writer(f)
+        writer.writerows(songs)
+
+# Load the (preprocessed) multidimensional songs array to a csv file.
+def load_songs(filename):
+    with open(filename, 'rb') as f:
+        reader = csv.reader(f)
+        for row in reader:
+            song = [int(x) for x in row]
+            yield song
